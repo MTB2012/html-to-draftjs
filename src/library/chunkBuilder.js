@@ -86,7 +86,7 @@ export const getAtomicBlockChunk = (entityId: number): Object => {
 
 export const getAtomicEntityChunk = (entityId: number): Object => {
   return {
-    text: '\r ',
+    text: ' ',
     inlines: [new OrderedSet()],
     entities: [entityId],
     blocks: [],
