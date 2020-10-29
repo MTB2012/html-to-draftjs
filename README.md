@@ -1,3 +1,6 @@
+
+### **forked from [jpuri/html-to-draftjs](https://github.com/jpuri/html-to-draftjs)**
+
 # HTML To DraftJS
 
 A library for converting plain HTML to DraftJS Editor content.
@@ -38,7 +41,8 @@ htmlToDraft('<hr/>', (nodeName, node) => {
     return {
       type: 'HORIZONTAL_RULE',
       mutability: 'MUTABLE',
-      data: {}
+      data: {},
+      isEntity: true | false
     };
   }
 })

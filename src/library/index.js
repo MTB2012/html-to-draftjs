@@ -10,6 +10,7 @@ import {
   getBlockDividerChunk,
   getFirstBlockChunk,
   getAtomicBlockChunk,
+  getAtomicEntityChunk,
   joinChunks,
 } from './chunkBuilder';
 import getBlockTypeForTag from './getBlockTypeForTag';
@@ -42,6 +43,10 @@ function genFragment(
         value.mutability,
         value.data || {},
       );
+      const isEntity = !!value.isEntity;
+      if(isEntity) {
+        return { chunk: getAtomicEntityChunk(entityId) };
+      }
       return { chunk: getAtomicBlockChunk(entityId) };
     }
   }
