@@ -84,9 +84,9 @@ export const getAtomicBlockChunk = (entityId: number): Object => {
   };
 };
 
-export const getAtomicEntityChunk = (entityId: number): Object => {
+export const createAtomicEntityChunk = (entityId: number, text: string): Object => {
   return {
-    text: ' ',
+    text: text || ' ',
     inlines: [new OrderedSet()],
     entities: [entityId],
     blocks: [],
