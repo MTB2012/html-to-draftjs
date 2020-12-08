@@ -25,6 +25,10 @@ let firstBlock = true;
 
 type CustomChunkGenerator = (nodeName: string, node: HTMLElement) => ?{type: string, mutability: string, data: {}};
 
+type HtmlToDraftOptions = {
+  imgToText: Boolean,
+};
+
 function genFragment(
   node: Object,
   inlineStyle: OrderedSet,
@@ -32,8 +36,11 @@ function genFragment(
   lastList: string,
   inEntity: number,
   customChunkGenerator: ?CustomChunkGenerator,
+  options: ?HtmlToDraftOptions,
 ): Object {
   const nodeName = node.nodeName.toLowerCase();
+
+  const { imgToText } = options || {};
 
   if (customChunkGenerator) {
     const value = customChunkGenerator(nodeName, node);
@@ -56,7 +63,7 @@ function genFragment(
     return createTextChunk(node, inlineStyle, inEntity);
   }
 
-  if (nodeName === 'br') {
+  if (nodeName === 'br' || node.textContent == '\n') {
     return { chunk: getSoftNewlineChunk() };
   }
 
@@ -64,6 +71,10 @@ function genFragment(
     nodeName === 'img' &&
     node instanceof HTMLImageElement
   ) {
+    if(imgToText) {
+      return { chunk: createAtomicEntityChunk(null, node.title || node.alt) };
+    }
+    
     const entityConfig = {};
     entityConfig.src = node.getAttribute ? node.getAttribute('src') || node.src : node.src;
     entityConfig.alt = node.alt;
@@ -155,7 +166,7 @@ function genFragment(
   let child = node.firstChild;
   while (child) {
     const entityId = getEntityId(child);
-    const { chunk: generatedChunk } = genFragment(child, inlineStyle, depth, lastList, (entityId || inEntity), customChunkGenerator);
+    const { chunk: generatedChunk } = genFragment(child, inlineStyle, depth, lastList, (entityId || inEntity), customChunkGenerator, options);
     chunk = joinChunks(chunk, generatedChunk);
     const sibling = child.nextSibling;
     child = sibling;
@@ -163,19 +174,19 @@ function genFragment(
   return { chunk };
 }
 
-function getChunkForHTML(html: string, customChunkGenerator: ?CustomChunkGenerator): Object {
+function getChunkForHTML(html: string, customChunkGenerator: ?CustomChunkGenerator, options: ?HtmlToDraftOptions): Object {
   const sanitizedHtml = html.trim().replace(REGEX_NBSP, SPACE);
   const safeBody = getSafeBodyFromHTML(sanitizedHtml);
   if (!safeBody) {
     return null;
   }
   firstBlock = true;
-  const { chunk } = genFragment(safeBody, new OrderedSet(), -1, '', undefined, customChunkGenerator);
+  const { chunk } = genFragment(safeBody, new OrderedSet(), -1, '', undefined, customChunkGenerator, options);
   return { chunk };
 }
 
-export default function htmlToDraft(html: string, customChunkGenerator: ?CustomChunkGenerator): Object {
-  const chunkData = getChunkForHTML(html, customChunkGenerator);
+export default function htmlToDraft(html: string, customChunkGenerator: ?CustomChunkGenerator, options: ?HtmlToDraftOptions): Object {
+  const chunkData = getChunkForHTML(html, customChunkGenerator, options);
   if (chunkData) {
     const { chunk } = chunkData;
     let entityMap = new OrderedMap({});
