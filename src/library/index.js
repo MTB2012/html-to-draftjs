@@ -63,7 +63,7 @@ function genFragment(
     return createTextChunk(node, inlineStyle, inEntity);
   }
 
-  if (nodeName === 'br' || node.textContent == '\n') {
+  if (nodeName === 'br'/* || node.textContent == '\n'*/) {
     return { chunk: getSoftNewlineChunk() };
   }
 
@@ -74,7 +74,7 @@ function genFragment(
     if(imgToText) {
       return { chunk: createAtomicEntityChunk(null, node.title || node.alt) };
     }
-    
+
     const entityConfig = {};
     entityConfig.src = node.getAttribute ? node.getAttribute('src') || node.src : node.src;
     entityConfig.alt = node.alt;
