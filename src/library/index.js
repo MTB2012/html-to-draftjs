@@ -233,7 +233,6 @@ function genFragment(
     const isEmptyText = !!(child.nodeName.toLowerCase() === '#text' && child.textContent && !child.textContent.trim());
     const isEmptyTextBetweenTags = isEmptyText && !!(child.previousElementSibling || child.nextElementSibling);
     if(isEmptyTextBetweenTags) {
-      console.warn(`html2draft.genFragment() skip empty text -> `, node, child);
       child = child.nextSibling;
       continue;
     }
