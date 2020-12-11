@@ -3,10 +3,27 @@ const inlineTags = {
   del: 'STRIKETHROUGH',
   em: 'ITALIC',
   strong: 'BOLD',
+  b: 'BOLD',
   ins: 'UNDERLINE',
+  u: 'UNDERLINE',
   sub: 'SUBSCRIPT',
   sup: 'SUPERSCRIPT',
 };
+
+function convertRgbToHex(color: string) {
+  let result;
+  try {
+    const colorArr = color && color.match(/^rgb\((\d+),(\d+),(\d+)\)$/);
+    if(colorArr && colorArr.length) {
+      result = "#" + ((1 << 24) + (+colorArr[1] << 16) + (+colorArr[2] << 8) + +colorArr[3]).toString(16).toUpperCase().slice(1);
+    }else {
+      result = color;
+    }
+  }catch(e) {
+    result = color;
+  }
+  return result;
+}
 
 export default function processInlineTag(
   tag: string,
@@ -29,10 +46,12 @@ export default function processInlineTag(
       const textDecoration = htmlElement.style.textDecoration;
       const fontStyle = htmlElement.style.fontStyle;
       if (color) {
-        style.add(`color-${color.replace(/ /g, '')}`);
+        // style.add(`color-${color.replace(/ /g, '')}`);
+        style.add(`color-${convertRgbToHex(color.replace(/ /g, ''))}`);
       }
       if (backgroundColor) {
-        style.add(`bgcolor-${backgroundColor.replace(/ /g, '')}`);
+        // style.add(`bgcolor-${backgroundColor.replace(/ /g, '')}`);
+        style.add(`bgcolor-${convertRgbToHex(backgroundColor.replace(/ /g, ''))}`);
       }
       if (fontSize) {
         style.add(`fontsize-${fontSize.replace(/px$/g, '')}`);
@@ -40,7 +59,8 @@ export default function processInlineTag(
       if (fontFamily) {
         style.add(`fontfamily-${fontFamily}`);
       }
-      if(fontWeight === 'bold'){
+      // if(fontWeight === 'bold'){
+      if (fontWeight && (fontWeight.includes('bold') || Number(fontWeight) >= 600 )) {
         style.add(inlineTags.strong)
       }
       if(textDecoration === 'underline'){

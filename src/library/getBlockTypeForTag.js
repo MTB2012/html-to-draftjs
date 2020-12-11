@@ -63,3 +63,21 @@ export default function getBlockTypeForTag(
   }
   return undefined;
 }
+
+export function isBlockElement(tag: string) {
+  const matchedTypes = blockRenderMap
+    .filter(draftBlock => {
+      return (draftBlock.element === tag ||
+        draftBlock.wrapper === tag ||
+        (draftBlock.aliasedElements && draftBlock.aliasedElements.indexOf(tag) > -1));
+    })
+    .keySeq()
+    .toSet()
+    .toArray();
+
+  if (matchedTypes.length >= 1) {
+    return matchedTypes[0];
+  }
+  return undefined;
+}
+

@@ -13,7 +13,7 @@ import {
   createAtomicEntityChunk,
   joinChunks,
 } from './chunkBuilder';
-import getBlockTypeForTag from './getBlockTypeForTag';
+import getBlockTypeForTag, { isBlockElement } from './getBlockTypeForTag';
 import processInlineTag from './processInlineTag';
 import getBlockData from './getBlockData';
 import getEntityId from './getEntityId';
@@ -28,6 +28,54 @@ type CustomChunkGenerator = (nodeName: string, node: HTMLElement) => ?{type: str
 type HtmlToDraftOptions = {
   imgToText: Boolean,
 };
+
+
+function isExistedBlockParents(node, distance, exceptNode) {
+  if(!node || !node.parentElement) {
+    return false;
+  }
+  distance = isNaN(distance) || !distance || distance < 1 ? 1 : +distance;
+  const MAX_DISTANCE = 10;
+  distance = distance > MAX_DISTANCE ? MAX_DISTANCE : distance;
+
+  let res = false;
+  let parent = node.parentElement;
+  const exceptNodeSet = Array.isArray(exceptNode) ? new Set(exceptNode) : new Set([])
+  while(parent) {
+    if(distance < 1) {
+      break;
+    }
+
+    const nodeName = parent.nodeName.toLowerCase();
+    const isBlock = !!isBlockElement(nodeName);
+    if(isBlock && !exceptNodeSet.has(nodeName)) {
+      res = isBlock;
+      break;
+    }
+
+    parent = parent.parentElement;
+    distance --;
+  }
+
+  return res;
+}
+
+function isEmptyText(text) {
+  try {
+    return !text || !text.trim();
+  } catch (error) { }
+  return false
+}
+
+function isEmptyAndNewLineText(text) {
+  let isEmptyAndNewLine = false;
+  const newLinePattern = /\n/;
+  try {
+    isEmptyAndNewLine = isEmptyText(text) && newLinePattern.test(text);
+  } catch (error) { }
+  return isEmptyAndNewLine;
+}
+
 
 function genFragment(
   node: Object,
@@ -59,11 +107,13 @@ function genFragment(
     }
   }
 
-  if (nodeName === '#text' && node.textContent !== '\n') {
+  // if (nodeName === '#text' && node.textContent !== '\n') {
+  if (nodeName === '#text' && !isEmptyAndNewLineText(node.textContent)) {
     return createTextChunk(node, inlineStyle, inEntity);
   }
 
-  if (nodeName === 'br'/* || node.textContent == '\n'*/) {
+  const isEmptyAndNewLineTextNode = nodeName === '#text' && isEmptyAndNewLineText(node.textContent);
+  if (nodeName === 'br' || isEmptyAndNewLineTextNode) {
     return { chunk: getSoftNewlineChunk() };
   }
 
@@ -142,7 +192,13 @@ function genFragment(
          lastList = '';
          depth = -1;
        }
-       if (!firstBlock) {
+
+      const parentNodeName = node.parentElement && node.parentElement.nodeName.toLowerCase();
+      const parentIsBlock = isExistedBlockParents(node, 1);
+      if(parentIsBlock && !node.previousElementSibling && parentNodeName != 'ul') {
+        chunk = getEmptyChunk();
+      }
+      else if (!firstBlock) {
          chunk = getBlockDividerChunk(
            blockType,
            depth,
@@ -158,13 +214,30 @@ function genFragment(
     }
   }
   if (!chunk) {
-    chunk = getEmptyChunk();
+    if(nodeName !== '#text' && nodeName !== 'body' && nodeName !== 'ul' && firstBlock) {
+      chunk = getFirstBlockChunk(
+        blockType,
+        getBlockData(node)
+      );
+      firstBlock = false;
+    }
+    else {
+      chunk = getEmptyChunk();
+    }
   }
 
   inlineStyle = processInlineTag(nodeName, node, inlineStyle);
 
   let child = node.firstChild;
   while (child) {
+    const isEmptyText = !!(child.nodeName.toLowerCase() === '#text' && child.textContent && !child.textContent.trim());
+    const isEmptyTextBetweenTags = isEmptyText && !!(child.previousElementSibling || child.nextElementSibling);
+    if(isEmptyTextBetweenTags) {
+      console.warn(`html2draft.genFragment() skip empty text -> `, node, child);
+      child = child.nextSibling;
+      continue;
+    }
+    
     const entityId = getEntityId(child);
     const { chunk: generatedChunk } = genFragment(child, inlineStyle, depth, lastList, (entityId || inEntity), customChunkGenerator, options);
     chunk = joinChunks(chunk, generatedChunk);
