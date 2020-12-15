@@ -214,7 +214,7 @@ function genFragment(
     }
   }
   if (!chunk) {
-    if(nodeName !== '#text' && nodeName !== 'body' && nodeName !== 'ul' && firstBlock) {
+    if(nodeName !== '#text' && nodeName !== '#comment' && nodeName !== 'body' && nodeName !== 'ul' && firstBlock) {
       chunk = getFirstBlockChunk(
         blockType,
         getBlockData(node)
