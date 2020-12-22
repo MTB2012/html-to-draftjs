@@ -76,6 +76,14 @@ function isEmptyAndNewLineText(text) {
   return isEmptyAndNewLine;
 }
 
+function isNotSupportedTag(name) {
+  const NOT_SUPPORTED_TAG = new Set(['title', 'style', 'iframe', 'embed', 'object', 'param', 'video', 'audio', 'source', 'track', 'canvas', 'map', 'area', 'svg', 'meta', 'base', 'basefont', 'script', 'noscript', 'applet', 'head', 'link', 'frame']);
+  try {
+    return NOT_SUPPORTED_TAG.has(name.toLowerCase())
+  } catch (error) {}
+  return false;
+}
+
 
 function genFragment(
   node: Object,
@@ -230,9 +238,10 @@ function genFragment(
 
   let child = node.firstChild;
   while (child) {
-    const isEmptyText = !!(child.nodeName.toLowerCase() === '#text' && child.textContent && !child.textContent.trim());
+    const childNodeName = child.nodeName.toLowerCase();
+    const isEmptyText = !!(childNodeName === '#text' && child.textContent && !child.textContent.trim());
     const isEmptyTextBetweenTags = isEmptyText && !!(child.previousElementSibling || child.nextElementSibling);
-    if(isEmptyTextBetweenTags) {
+    if(isEmptyTextBetweenTags || isNotSupportedTag(childNodeName)) {
       child = child.nextSibling;
       continue;
     }
