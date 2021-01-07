@@ -84,6 +84,25 @@ function isNotSupportedTag(name) {
   return false;
 }
 
+function clearStyleByPriority(style: OrderedSet) {
+  try {
+    const styleArray = style && style.toJS();
+    if(styleArray && styleArray.length > 0) {
+      let colorStyle = null;
+      let bgcolorStyle = null;
+      for(let i = styleArray.length - 1; i >= 0; i --) {
+        if(styleArray[i].indexOf('color-') === 0) {
+          !!colorStyle ? style = style.delete(styleArray[i]) : colorStyle = styleArray[i];
+        }
+        else if(styleArray[i].indexOf('bgcolor-') === 0) {
+          !!bgcolorStyle ? style = style.delete(styleArray[i]) : bgcolorStyle = styleArray[i];
+        }
+      }
+    }
+  } catch (error) {}
+  return style;
+}
+
 
 function genFragment(
   node: Object,
@@ -287,6 +306,9 @@ export default function htmlToDraft(html: string, customChunkGenerator: ?CustomC
             const characterList = new List(
               inlines.map((style, index) => {
                 const data = { style, entity: null };
+                if(data.style && data.style.size > 0) {
+                  data.style = clearStyleByPriority(data.style);
+                }
                 if (entities[index]) {
                   data.entity = entities[index];
                 }

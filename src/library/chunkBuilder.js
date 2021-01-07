@@ -14,7 +14,7 @@ export const getWhitespaceChunk = (entityId: ?string): Object => {
 
 export const createTextChunk = (node: Object, inlineStyle: OrderedSet, entityId: number): Object => {
   const text = node.textContent;
-  if (text.trim() === '') {
+  if (text.trim() === '' && (!inlineStyle || !inlineStyle.size)) {
     return { chunk: getWhitespaceChunk(entityId) };
   }
   return {
